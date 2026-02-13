@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Assignment Dashboard | EXAL</title>
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>window.jsPDF = window.jspdf.jsPDF;</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9F7;
+            color: #2C3E50;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #2C3E50;
+            color: #2C3E50;
+            font-weight: 600;
+        }
+
+        .tab-inactive {
+            color: #7F8C8D;
+        }
+
+        .tab-inactive:hover {
+            color: #2C3E50;
+        }
+
+        .btn-action {
+            background-color: #4A5568;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #2D3748;
+        }
+
+        .btn-primary {
+            background-color: #C0392B;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #A93226;
+        }
+
+        .btn-outline {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: #4A5568;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background-color: #F7FAFC;
+            border-color: #CBD5E0;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-enter {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        .table-container {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            background: #F8FAFC;
+            padding: 0.75rem 1rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748B;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            border-bottom: 1px solid #E2E8F0;
+            font-weight: 700;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.85rem;
+        }
+
+        tr:hover {
+            background: #F8FAFC;
+        }
+
+        .save-float {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 2rem;
+            background: #C0392B;
+            color: white;
+            border-radius: 9999px;
+            box-shadow: 0 10px 15px -3px rgba(192, 57, 43, 0.4);
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 100;
+            transition: all 0.2s;
+        }
+
+        .save-float:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -3px rgba(192, 57, 43, 0.5);
+            background: #A93226;
+        }
+
+        .pill {
+            padding: 0.2rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .pill-blue {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .pill-pink {
+            background: #FCE7F3;
+            color: #9D174D;
+        }
+
+        .pill-gray {
+            background: #F1F5F9;
+            color: #475569;
+        }
+
+        .qty-input {
+            width: 60px;
+            padding: 0.3rem;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .qty-input:focus {
+            border-color: #2C3E50;
+        }
+
+        .empty-state {
+            padding: 4rem;
+            text-align: center;
+            color: #94A3B8;
+            border: 2px dashed #E2E8F0;
+            border-radius: 16px;
+            background: white;
+        }
+
+        /* Multi-select Dropdown Styles */
+        .multi-select-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            padding: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        .dropdown-content.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #F8FAFC;
+        }
+
+        .dropdown-trigger {
+            cursor: pointer;
+            border: 1px solid #E2E8F0;
+            border-radius: 6px;
+            padding: 6px 12px;
+            background: white;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-width: 140px;
+            outline: none;
+        }
+
+        .dropdown-trigger:focus {
+            border-color: #2C3E50;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col overflow-hidden bg-[#F9F9F7]">
+
+    <!-- Header -->
+    <header
+        class="bg-white border-b border-[#E2E8F0] px-6 py-3 flex justify-between items-center shadow-sm z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-br from-[#2C3E50] to-[#1A252F] text-white p-2 rounded-md shadow-sm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-[#2D3748]">Teacher Center</h1>
+                <p class="text-xs text-[#7F8C8D] uppercase tracking-wide">Dress Assignment & Logging</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="saveStatus"
+                class="flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-full border border-green-100 hidden">
+                <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span id="saveStatusText">Saved</span>
+            </div>
+            <div id="fileStatus"
+                class="text-xs text-[#7F8C8D] bg-gray-50 px-3 py-1 rounded-full border border-gray-100 italic">
+                No File Loaded
+            </div>
+            <a href="production_dashboard.html"
+                class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide">
+                &rarr; Production Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="bg-white border-b border-[#E2E8F0] px-6 flex items-center gap-6 shrink-0 z-20">
+        <button onclick="switchView('assignment')" id="tab-assignment"
+            class="tab-inactive py-3 text-sm transition-colors whitespace-nowrap">1. Assignments</button>
+        <button onclick="switchView('dresses')" id="tab-dresses"
+            class="tab-inactive py-3 text-sm transition-colors whitespace-nowrap">2. Dress Admin</button>
+        <button onclick="switchView('downloads')" id="tab-downloads"
+            class="tab-inactive py-3 text-sm transition-colors whitespace-nowrap">3. Downloads</button>
+    </nav>
+
+    <!-- Toolbar -->
+    <div
+        class="bg-white border-b border-[#E2E8F0] px-6 py-3 flex flex-wrap gap-4 items-center shrink-0 shadow-sm z-40 relative">
+        <button onclick="document.getElementById('importInput').click()"
+            class="btn-outline px-4 py-2 rounded text-sm font-bold flex items-center gap-2 whitespace-nowrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Load Student List
+        </button>
+        <input type="file" id="importInput" hidden accept=".xlsx,.xls" onchange="handleExcelUpload(this)">
+
+        <div class="h-6 w-px bg-gray-200"></div>
+
+        <!-- FILTERS -->
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-gray-400 uppercase">Search:</span>
+                <input type="text" id="searchInput" placeholder="Name or Reg..."
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 focus:border-blue-500 outline-none w-36 transition-all"
+                    onkeyup="renderAssignmentGrid()">
+            </div>
+
+            <div class="multi-select-dropdown" id="dropdownClass">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Classes:</div>
+                <button class="dropdown-trigger" onclick="toggleDropdown('dropdownClassContent')">
+                    <span id="classSelectLabel">All Selected</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="dropdownClassContent" class="dropdown-content">
+                    <div
+                        class="dropdown-item bg-gray-50 border-b border-gray-100 flex justify-between font-bold text-[10px]">
+                        <span onclick="toggleAllFilters('classFilters', true)">Select All</span>
+                        <span onclick="toggleAllFilters('classFilters', false)" class="text-red-500">Clear</span>
+                    </div>
+                    <div id="classFiltersList"></div>
+                </div>
+            </div>
+
+            <div class="multi-select-dropdown" id="dropdownDiv">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Divisions:</div>
+                <button class="dropdown-trigger" onclick="toggleDropdown('dropdownDivContent')">
+                    <span id="divSelectLabel">All Selected</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="dropdownDivContent" class="dropdown-content">
+                    <div
+                        class="dropdown-item bg-gray-50 border-b border-gray-100 flex justify-between font-bold text-[10px]">
+                        <span onclick="toggleAllFilters('divFilters', true)">Select All</span>
+                        <span onclick="toggleAllFilters('divFilters', false)" class="text-red-500">Clear</span>
+                    </div>
+                    <div id="divFiltersList"></div>
+                </div>
+            </div>
+
+            <div class="multi-select-dropdown" id="dropdownHouse">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Houses:</div>
+                <button class="dropdown-trigger" onclick="toggleDropdown('dropdownHouseContent')">
+                    <span id="houseSelectLabel">All Selected</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="dropdownHouseContent" class="dropdown-content">
+                    <div
+                        class="dropdown-item bg-gray-50 border-b border-gray-100 flex justify-between font-bold text-[10px]">
+                        <span onclick="toggleAllFilters('houseFilters', true)">Select All</span>
+                        <span onclick="toggleAllFilters('houseFilters', false)" class="text-red-500">Clear</span>
+                    </div>
+                    <div id="houseFiltersList"></div>
+                </div>
+            </div>
+
+            <div class="multi-select-dropdown" id="dropdownGender">
+                <div class="text-[10px] font-bold text-gray-400 uppercase mb-0.5">Gender:</div>
+                <button class="dropdown-trigger" onclick="toggleDropdown('dropdownGenderContent')">
+                    <span id="genderSelectLabel">Both Selected</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div id="dropdownGenderContent" class="dropdown-content">
+                    <div id="genderFiltersList">
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="Boy" checked data-filter="gender"
+                                onchange="renderAssignmentGrid()">
+                            <span>Boy</span>
+                        </label>
+                        <label class="dropdown-item">
+                            <input type="checkbox" value="Girl" checked data-filter="gender"
+                                onchange="renderAssignmentGrid()">
+                            <span>Girl</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-1"></div>
+
+        <div id="filterSummary" class="text-xs font-bold text-[#7F8C8D] uppercase tracking-wider whitespace-nowrap">
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- VIEW 1: ASSIGNMENTS -->
+        <div id="view-assignment" class="flex flex-1 h-full w-full absolute inset-0 bg-[#F9F9F7] animate-enter">
+            <div class="flex-1 overflow-hidden flex flex-col p-6">
+                <div id="assignmentTableWrapper" class="flex-1 flex flex-col h-full overflow-hidden">
+                    <div class="empty-state m-auto shadow-sm">
+                        <div class="bg-gray-50 p-6 rounded-full inline-block mb-4">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="text-gray-300">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-500 mb-2">No Student Data Loaded</h3>
+                        <p class="text-sm max-w-xs mx-auto mb-6">Import an Excel file containing your students to begin
+                            assigning uniform items.</p>
+                        <button onclick="document.getElementById('importInput').click()"
+                            class="btn-primary px-6 py-2 rounded-lg text-sm font-bold shadow-md">
+                            Upload Excel Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: DOWNLOAD CENTER -->
+        <div id="view-downloads"
+            class="hidden h-full w-full overflow-y-auto p-6 absolute inset-0 bg-[#F9F9F7] animate-enter">
+            <div class="max-w-4xl mx-auto space-y-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-[#2C3E50] mb-2">Download Center</h2>
+                    <p class="text-gray-500">Export your data for production or generate printable summaries.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Excel Export Card -->
+                    <div
+                        class="bg-white p-8 rounded-2xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all group">
+                        <div
+                            class="w-14 h-14 bg-green-50 text-green-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-[#2C3E50] mb-3">Master Production Workbook</h3>
+                        <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+                            Generates a multi-sheet Excel file containing all student measurements, dress assignments,
+                            and configurations.
+                            <b>Required for the Production Dashboard.</b>
+                        </p>
+                        <button onclick="exportAssignedData()"
+                            class="w-full btn-action py-4 rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-3">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Download Excel (.xlsx)
+                        </button>
+                    </div>
+
+                    <!-- PDF Export Card -->
+                    <div
+                        class="bg-white p-8 rounded-2xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all group">
+                        <div
+                            class="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M16 13H8"></path>
+                                <path d="M16 17H8"></path>
+                                <path d="M10 9H9h-1"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-[#2C3E50] mb-3">Assignment Summary PDF</h3>
+                        <p class="text-sm text-gray-500 mb-8 leading-relaxed">
+                            Generates a clean, professional PDF report of all students and their assigned items.
+                            <b>Perfect for printing and physical distribution lists.</b>
+                        </p>
+                        <button onclick="exportSummaryPDF()"
+                            class="w-full bg-[#2C3E50] text-white py-4 rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-3 hover:bg-[#1A252F] transition-colors">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                            Download Summary PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer Note -->
+                <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl flex items-start gap-4">
+                    <div class="bg-blue-100 p-2 rounded-lg mt-1">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-900 mb-1">Backup Recommendation</h4>
+                        <p class="text-sm text-blue-800 leading-relaxed">
+                            These downloads act as a backup. If you move to a different computer, simply upload your
+                            exported Excel file to restore all your assignments and custom dresses.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: DRESS ADMIN -->
+        <div id="view-dresses"
+            class="hidden h-full w-full overflow-y-auto p-6 absolute inset-0 bg-[#F9F9F7] animate-enter">
+            <div class="max-w-6xl mx-auto space-y-6">
+                <div
+                    class="flex justify-between items-center bg-white p-6 rounded-xl border border-[#E2E8F0] shadow-sm">
+                    <div>
+                        <h2 class="text-2xl font-bold text-[#2C3E50]">Dress Master Configuration</h2>
+                        <p class="text-sm text-gray-500">Configure dress patterns available for teacher assignment.</p>
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="restoreDefaultDresses()"
+                            class="btn-outline px-6 py-3 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-all hover:bg-gray-50">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                                <path d="M21 3v5h-5"></path>
+                                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                                <path d="M3 21v-5h5"></path>
+                            </svg>
+                            Restore Defaults
+                        </button>
+                        <button onclick="totalReset()"
+                            class="btn-outline border-red-200 text-red-500 px-6 py-3 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition-all hover:bg-red-50">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M19 6L12 13L5 6"></path>
+                                <path d="M12 13V20"></path>
+                            </svg>
+                            Clear All Data
+                        </button>
+                        <button onclick="openDressModal()"
+                            class="btn-action px-6 py-3 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add New Dress
+                        </button>
+                    </div>
+                </div>
+                <div id="dressConfigBody" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+        </div>
+    </main>
+
+
+    <!-- Modals -->
+    <div id="dressModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDressModal()"></div>
+        <div class="relative bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 animate-enter">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 id="modalTitle" class="text-2xl font-bold text-[#2C3E50]">Add New Dress</h2>
+                    <p class="text-xs text-gray-500">Configure global dress options.</p>
+                </div>
+                <button onclick="closeDressModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Dress
+                        Name</label>
+                    <input type="text" id="newDressName" placeholder="e.g. WINTER BLAZER"
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#2C3E50] focus:bg-white transition-all text-sm font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Target
+                        Gender</label>
+                    <select id="newDressGender"
+                        class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#2C3E50] focus:bg-white transition-all text-sm font-medium">
+                        <option value="Both">Unisex (All Students)</option>
+                        <option value="Boy">Boys Only</option>
+                        <option value="Girl">Girls Only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-8">
+                <button onclick="closeDressModal()"
+                    class="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button onclick="saveDress()"
+                    class="flex-1 px-4 py-3 rounded-xl bg-[#2C3E50] text-white text-sm font-bold shadow-lg hover:bg-[#1A252F] transition-all">Save
+                    Pattern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast"
+        class="hidden fixed top-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-[#2C3E50] text-white text-sm font-bold rounded-full shadow-2xl z-[200] flex items-center gap-3 transition-opacity">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            class="text-green-400">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span id="toastMsg">Action Successful</span>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const DEFAULT_DRESSES = [
+            { id: 'd_def_b1', name: 'BOYS - FORMAL HALF SLEEVE SHIRT', gender: 'Boy' },
+            { id: 'd_def_b2', name: 'BOYS - TRACK T-SHIRT', gender: 'Boy' },
+            { id: 'd_def_b3', name: 'BOYS - UNIFORM T-SHIRT', gender: 'Boy' },
+            { id: 'd_def_b4', name: 'BOYS - JERKIN', gender: 'Boy' },
+            { id: 'd_def_b5', name: 'BOYS - PULLOVER', gender: 'Boy' },
+            { id: 'd_def_b6', name: 'BOYS - FORMAL PANT', gender: 'Boy' },
+            { id: 'd_def_b7', name: 'BOYS - TRACK PANT', gender: 'Boy' },
+            { id: 'd_def_b8', name: 'BOYS - FORMAL SHORTS', gender: 'Boy' },
+            { id: 'd_def_b9', name: 'BOYS - TRACK SHORTS', gender: 'Boy' },
+            { id: 'd_def_b10', name: 'BOYS - PANT SPECIAL CASE', gender: 'Boy' },
+            { id: 'd_def_g1', name: 'GIRLS - FORMAL HALF SLEEVE SHIRT', gender: 'Girl' },
+            { id: 'd_def_g2', name: 'GIRLS - TRACK T-SHIRT', gender: 'Girl' },
+            { id: 'd_def_g3', name: 'GIRLS - UNIFORM T-SHIRT', gender: 'Girl' },
+            { id: 'd_def_g4', name: 'GIRLS - JERKIN', gender: 'Girl' },
+            { id: 'd_def_g5', name: 'GIRLS - FORMAL FULL SLEEVE SHIRT', gender: 'Girl' },
+            { id: 'd_def_g6', name: 'GIRLS - PULLOVER', gender: 'Girl' },
+            { id: 'd_def_g7', name: 'GIRLS - KURTHA SHIRT', gender: 'Girl' },
+            { id: 'd_def_g8', name: 'GIRLS - SPECIAL FROCKS', gender: 'Girl' },
+            { id: 'd_def_g9', name: 'GIRLS - FORMAL PANT', gender: 'Girl' },
+            { id: 'd_def_g10', name: 'GIRLS - TRACK PANT', gender: 'Girl' },
+            { id: 'd_def_g11', name: 'GIRLS - TRACK SHORTS', gender: 'Girl' },
+            { id: 'd_def_g12', name: 'GIRLS - PINOFORE', gender: 'Girl' },
+            { id: 'd_def_g13', name: 'GIRLS - SKIRT', gender: 'Girl' },
+            { id: 'd_def_g14', name: 'GIRLS - TRACK SKORT', gender: 'Girl' },
+            { id: 'd_def_g15', name: 'GIRLS - PANT SPECIAL CASE', gender: 'Girl' }
+        ];
+
+        let state = {
+            students: [],
+            dresses: [...DEFAULT_DRESSES],
+            assignments: {},
+            activeView: 'assignment',
+            sourceBinary: null, // NEW: Preserve original workbook binary
+            filters: {
+                classes: [],
+                divisions: [],
+                houses: []
+            }
+        };
+
+        // --- RESTORE DEFAULTS ---
+        function restoreDefaultDresses() {
+            if (confirm("Restore all 25 standard uniforms? This will add any missing default items to your list.")) {
+                let added = 0;
+                DEFAULT_DRESSES.forEach(def => {
+                    if (!state.dresses.some(d => d.name === def.name)) {
+                        state.dresses.push({ ...def });
+                        added++;
+                    }
+                });
+                persist();
+                renderDressConfig();
+                showToast(`Added ${added} default dress types.`);
+            }
+        }
+
+        // --- Persistence Logic ---
+        let saveTimeout;
+        function persist() {
+            const statusEl = document.getElementById('saveStatus');
+            const statusText = document.getElementById('saveStatusText');
+
+            statusEl.classList.remove('hidden');
+            statusEl.className = statusEl.className.replace('bg-green-50 text-green-700 border-green-100', 'bg-blue-50 text-blue-700 border-blue-100');
+            statusText.innerText = "Saving...";
+
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                localStorage.setItem('teacher_dresses', JSON.stringify(state.dresses));
+                localStorage.setItem('teacher_assignments', JSON.stringify(state.assignments));
+                localStorage.setItem('teacher_students', JSON.stringify(state.students));
+                localStorage.setItem('teacher_active_view', state.activeView);
+
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                statusEl.className = statusEl.className.replace('bg-blue-50 text-blue-700 border-blue-100', 'bg-green-50 text-green-700 border-green-100');
+                statusText.innerText = `Saved at ${timeStr}`;
+
+                // Keep the saved indicator visible for reassurance
+            }, 800);
+        }
+
+        // --- Forced Save on Exit ---
+        window.onbeforeunload = () => {
+            if (saveTimeout) {
+                // Execute immediate sync save
+                localStorage.setItem('teacher_dresses', JSON.stringify(state.dresses));
+                localStorage.setItem('teacher_assignments', JSON.stringify(state.assignments));
+                localStorage.setItem('teacher_students', JSON.stringify(state.students));
+                localStorage.setItem('teacher_active_view', state.activeView);
+            }
+        };
+
+        function totalReset() {
+            if (confirm("CRITICAL WARNING: This will permanently delete ALL students, assignments, and custom dresses. There is no undo. Are you absolutely sure?")) {
+                localStorage.removeItem('teacher_dresses');
+                localStorage.removeItem('teacher_assignments');
+                localStorage.removeItem('teacher_students');
+                location.reload();
+            }
+        }
+
+        // --- Service Worker Registration ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW: Registered', reg))
+                    .catch(err => console.log('SW: Registration failed', err));
+            });
+        }
+
+        window.onload = () => {
+            // Restore Dresses
+            const savedDresses = localStorage.getItem('teacher_dresses');
+            if (savedDresses) {
+                let current = JSON.parse(savedDresses);
+                // CLEANUP: Remove old placeholder dresses (IDs 1, 2, 3, 4, 5)
+                state.dresses = current.filter(d => !['1', '2', '3', '4', '5', 1, 2, 3, 4, 5].includes(d.id));
+
+                // If the list is now empty or missing defaults, replenish
+                if (state.dresses.length === 0) state.dresses = [...DEFAULT_DRESSES];
+                persist();
+            } else {
+                state.dresses = [...DEFAULT_DRESSES];
+                persist();
+            }
+
+            // Restore Assignments
+            const savedAssigns = localStorage.getItem('teacher_assignments');
+            if (savedAssigns) state.assignments = JSON.parse(savedAssigns);
+
+            // Restore Students
+            const savedStudents = localStorage.getItem('teacher_students');
+            if (savedStudents) {
+                state.students = JSON.parse(savedStudents);
+                // Rebuild filter lists from saved students
+                state.filters.classes = [...new Set(state.students.map(s => s.Class))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                state.filters.divisions = [...new Set(state.students.map(s => s.Section))].sort();
+                state.filters.houses = [...new Set(state.students.map(s => s.House))].sort();
+
+                document.getElementById('fileStatus').innerText = `Restored (${state.students.length} students)`;
+                renderFilters();
+            }
+
+            // Restore View
+            const savedView = localStorage.getItem('teacher_active_view') || 'assignment';
+            switchView(savedView);
+
+            // Initial render
+            if (state.activeView === 'assignment' && state.students.length > 0) {
+                renderAssignmentGrid();
+            }
+        };
+
+        // --- View Logic ---
+        function switchView(view) {
+            state.activeView = view;
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('tab-active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.add('tab-inactive'));
+            document.getElementById(`tab-${view}`).classList.add('tab-active');
+            document.getElementById(`tab-${view}`).classList.remove('tab-inactive');
+
+            document.getElementById('view-assignment').classList.add('hidden');
+            document.getElementById('view-dresses').classList.add('hidden');
+            document.getElementById('view-downloads').classList.add('hidden');
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+
+            if (view === 'assignment' && state.students.length > 0) renderAssignmentGrid();
+            persist();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.classList.add('hidden'), 500);
+            }, 3000);
+        }
+
+        // --- Multi-Select UI Logic ---
+        function toggleDropdown(id) {
+            const dropdown = document.getElementById(id);
+            const wasOpen = dropdown.classList.contains('show');
+            document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            if (!wasOpen) dropdown.classList.add('show');
+        }
+
+        window.onclick = function (event) {
+            if (!event.target.closest('.multi-select-dropdown')) {
+                document.querySelectorAll('.dropdown-content').forEach(d => d.classList.remove('show'));
+            }
+        }
+
+        function toggleAllFilters(groupName, bool) {
+            document.querySelectorAll(`input[data-filter="${groupName}"]`).forEach(i => i.checked = bool);
+            renderAssignmentGrid();
+        }
+
+        // --- Dress Config ---
+        function renderDressConfig() {
+            const container = document.getElementById('dressConfigBody');
+            container.innerHTML = state.dresses.map(d => `
+                <div class="bg-white p-6 rounded-2xl border border-[#E2E8F0] shadow-sm hover:shadow-md transition-all group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <button onclick="deleteDress('${d.id}')" class="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                         </button>
+                    </div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gray-50 flex items-center justify-center text-[#2C3E50] font-bold text-lg">${d.name.charAt(0)}</div>
+                        <div>
+                            <h4 class="font-bold text-[#2C3E50] leading-none mb-1 text-sm">${d.name}</h4>
+                            <span class="pill ${d.gender === 'Boy' ? 'pill-blue' : (d.gender === 'Girl' ? 'pill-pink' : 'pill-gray')}">${d.gender === 'Both' ? 'Unisex Pattern' : (d.gender + ' Item')}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openDressModal() { document.getElementById('dressModal').classList.remove('hidden'); }
+        function closeDressModal() { document.getElementById('dressModal').classList.add('hidden'); }
+        function saveDress() {
+            const name = document.getElementById('newDressName').value.trim();
+            const gender = document.getElementById('newDressGender').value;
+            if (!name) return alert("Enter dress name.");
+            state.dresses.push({ id: 'd_' + Date.now(), name: name.toUpperCase(), gender: gender });
+            persist();
+            renderDressConfig();
+            closeDressModal();
+            showToast("Dress added!");
+        }
+        function deleteDress(id) {
+            if (confirm("Delete this dress?")) {
+                state.dresses = state.dresses.filter(d => d.id != id);
+                persist();
+                renderDressConfig();
+            }
+        }
+
+        // --- Data Handling ---
+        function handleExcelUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                state.sourceBinary = data; // NEW: Capture original binary
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                state.students = jsonData.map((s, idx) => {
+                    const student = {
+                        id: s.RegNo || s.Reg_No || s['Admission No'] || (Date.now() + idx),
+                        Name: s.Name || s.Student_Name || s['Student Name'] || '',
+                        RegNo: s.RegNo || s.Reg_No || s['Admission No'] || '',
+                        Roll: s.Roll || s.Roll_No || s['Roll No'] || '',
+                        Class: s.Class ? s.Class.toString() : '',
+                        Section: (s.Section || s.Division || s['Division'] || '').toString(),
+                        Gender: s.Gender || '',
+                        House: s.House || s.HOUSE || 'No House'
+                    };
+
+                    // NEW: Capture Measurements (U1-L8) with Case-Insensitivity
+                    const measurements = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'];
+                    const rowKeys = Object.keys(s);
+
+                    measurements.forEach(m => {
+                        // Find the key in the row that matches 'm' regardless of case
+                        const matchingKey = rowKeys.find(k => k.trim().toUpperCase() === m.toUpperCase());
+                        student[m] = matchingKey ? s[matchingKey] : (s[m] || '');
+                    });
+
+                    return student;
+                }).filter(s => s.Name);
+
+                state.filters.classes = [...new Set(state.students.map(s => s.Class))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+                state.filters.divisions = [...new Set(state.students.map(s => s.Section))].sort();
+                state.filters.houses = [...new Set(state.students.map(s => s.House))].sort();
+
+                // --- INTEGRATED FLOW: DETECT SYSTEM STATE METADATA ---
+                const hasStateSheet = workbook.SheetNames.includes("EXAL_SYSTEM_STATE");
+                let restoredCount = 0;
+
+                if (hasStateSheet) {
+                    const stateWs = workbook.Sheets["EXAL_SYSTEM_STATE"];
+                    const stateRows = XLSX.utils.sheet_to_json(stateWs);
+                    const savedAssignments = stateRows.find(r => r.key === 'assignments');
+                    const savedDresses = stateRows.find(r => r.key === 'dresses');
+
+                    if (savedAssignments || savedDresses) {
+                        if (confirm("This file contains existing assignments or custom dresses from another computer. Do you want to restore them to this dashboard?")) {
+                            if (savedAssignments) {
+                                state.assignments = JSON.parse(savedAssignments.value);
+                            }
+                            if (savedDresses) {
+                                state.dresses = JSON.parse(savedDresses.value);
+                            }
+                            restoredCount = Object.keys(state.assignments).length;
+                        }
+                    }
+                }
+
+                persist(); // SAVE IMMEDIATELY
+                renderFilters();
+                renderAssignmentGrid();
+                renderDressConfig(); // Refresh dress list if restored
+
+                const statsMsg = restoredCount > 0 ? ` + Restored ${restoredCount} assignments` : "";
+                document.getElementById('fileStatus').innerText = `Loaded: ${file.name} (${state.students.length})${statsMsg}`;
+                if (restoredCount > 0) showToast(`Restored ${restoredCount} assignments from file.`);
+                showToast("Import successful!");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderFilters() {
+            const renderGroup = (containerId, items, groupName) => {
+                const container = document.getElementById(containerId);
+                container.innerHTML = items.map(item => `
+                    <label class="dropdown-item">
+                        <input type="checkbox" value="${item}" checked data-filter="${groupName}" onchange="renderAssignmentGrid()">
+                        <span>${item}</span>
+                    </label>
+                `).join('');
+            };
+            renderGroup('classFiltersList', state.filters.classes, 'classFilters');
+            renderGroup('divFiltersList', state.filters.divisions, 'divFilters');
+            renderGroup('houseFiltersList', state.filters.houses, 'houseFilters');
+        }
+
+        function renderAssignmentGrid() {
+            const wrapper = document.getElementById('assignmentTableWrapper');
+            if (state.students.length === 0) return;
+
+            const getSelected = (selector) => Array.from(document.querySelectorAll(selector)).map(i => i.value);
+            const selClasses = getSelected('input[data-filter="classFilters"]:checked');
+            const selDivs = getSelected('input[data-filter="divFilters"]:checked');
+            const selHouses = getSelected('input[data-filter="houseFilters"]:checked');
+            const selGenders = getSelected('input[data-filter="gender"]:checked');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            const updateLabel = (id, count, total) => {
+                const el = document.getElementById(id);
+                if (count === 0) el.innerText = "None";
+                else if (count === total) el.innerText = "All Selected";
+                else el.innerText = `${count} selected`;
+            };
+            updateLabel('classSelectLabel', selClasses.length, state.filters.classes.length);
+            updateLabel('divSelectLabel', selDivs.length, state.filters.divisions.length);
+            updateLabel('houseSelectLabel', selHouses.length, state.filters.houses.length);
+            updateLabel('genderSelectLabel', selGenders.length, 2);
+
+            const filtered = state.students.filter(s => {
+                const sGender = (s.Gender || '').toString().toLowerCase();
+                const genderKey = (sGender.includes('boy') || sGender === 'm' || sGender === 'male') ? 'Boy' : 'Girl';
+                return (s.Name.toLowerCase().includes(search) || (s.RegNo && s.RegNo.toString().includes(search))) &&
+                    selClasses.includes(s.Class) && selDivs.includes(s.Section) &&
+                    selHouses.includes(s.House) && selGenders.includes(genderKey);
+            });
+
+            document.getElementById('filterSummary').innerText = `Viewing ${filtered.length} Students`;
+
+            wrapper.innerHTML = `
+                <div class="flex justify-end items-center mb-4 shrink-0">
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                        Scroll Right &rarr;
+                    </div>
+                </div>
+            `;
+
+            if (filtered.length === 0) {
+                wrapper.innerHTML = `<div class="p-12 text-center text-gray-400 italic bg-white rounded-xl border border-dashed border-gray-200 shadow-sm m-auto">No results.</div>`;
+                return;
+            }
+
+            // Identify which dresses are relevant to the CURRENT GENDER FILTER
+            // This ensures new dresses show up immediately even if no specific student is matched yet
+            let relevantDresses = state.dresses.filter(d => {
+                const target = d.gender;
+                if (target === 'Both') return true;
+
+                // If "Both" genders are selected, show everything
+                if (selGenders.length > 1) return true;
+
+                // Otherwise only show what matches the filter
+                return selGenders.includes(target);
+            });
+
+            // Reorder: Boys (1), Unisex (2), Girls (3)
+            const genderPriority = { 'Boy': 1, 'Both': 2, 'Girl': 3 };
+            relevantDresses.sort((a, b) => {
+                const priA = genderPriority[a.gender] || 99;
+                const priB = genderPriority[b.gender] || 99;
+                if (priA !== priB) return priA - priB;
+                return a.name.localeCompare(b.name);
+            });
+
+            let html = `<div class="table-container shadow-sm flex-1"><table><thead><tr><th class="z-30">Student Info</th>`;
+            relevantDresses.forEach(d => { html += `<th>${d.name}</th>`; });
+            html += `</tr></thead><tbody>`;
+
+            filtered.forEach(s => {
+                const sGender = (s.Gender || '').toString().toLowerCase();
+                const isBoy = (sGender.includes('boy') || sGender === 'm' || sGender === 'male');
+                const isGirl = (sGender.includes('girl') || sGender === 'f' || sGender === 'female');
+
+                html += `<tr>
+                    <td class="sticky left-0 bg-white shadow-[2px_0_5px_rgba(0,0,0,0.03)] z-10 w-48">
+                        <div class="font-bold text-[#2C3E50] truncate w-40" title="${s.Name}">${s.Name}</div>
+                        <div class="text-[9px] text-gray-400 font-bold uppercase tracking-tight">REG: ${s.RegNo || 'N/A'} | ${s.Class}-${s.Section} | ${s.House}</div>
+                    </td>`;
+
+                relevantDresses.forEach(d => {
+                    const target = d.gender;
+                    const gMatch = target === 'Both' || (target === 'Boy' && isBoy) || (target === 'Girl' && isGirl);
+                    if (gMatch) {
+                        const currentAssigns = state.assignments[s.id] || {};
+                        const qty = currentAssigns[d.id] || 0;
+                        html += `<td>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="qty-input h-7" value="${qty}" min="0" 
+                                    onchange="updateAssign('${s.id}', '${d.id}', this.value)"
+                                    onkeydown="handleGridNav(event)">
+                            </div>
+                        </td>`;
+                    } else {
+                        html += `<td class="bg-gray-50/10 opacity-20"></td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+            html += `</tbody></table></div>`;
+            wrapper.innerHTML = html;
+        }
+
+        function handleGridNav(e) {
+            const input = e.target;
+            const td = input.closest('td');
+            const tr = td.closest('tr');
+            const colIndex = Array.from(tr.children).indexOf(td);
+            const inputs = Array.from(document.querySelectorAll('.qty-input'));
+
+            let targetTr = null;
+            let targetTd = null;
+
+            if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                e.preventDefault();
+                targetTr = tr.nextElementSibling;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                targetTr = tr.previousElementSibling;
+            } else if (e.key === 'ArrowRight') {
+                targetTd = td.nextElementSibling;
+                while (targetTd && !targetTd.querySelector('.qty-input')) targetTd = targetTd.nextElementSibling;
+            } else if (e.key === 'ArrowLeft') {
+                targetTd = td.previousElementSibling;
+                while (targetTd && !targetTd.querySelector('.qty-input')) targetTd = targetTd.previousElementSibling;
+            }
+
+            if (targetTr) {
+                targetTd = targetTr.children[colIndex];
+                // Skip non-input cells (wrong gender)
+                if (targetTd && !targetTd.querySelector('.qty-input')) {
+                    // Find next available input in same column if possible or loop? 
+                    // For now, just stop if blocked or find next tr
+                }
+            }
+
+            if (targetTd) {
+                const nextInput = targetTd.querySelector('.qty-input');
+                if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                }
+            }
+        }
+
+        function updateAssign(sid, did, val) {
+            if (!state.assignments[sid]) state.assignments[sid] = {};
+            const v = parseInt(val) || 0;
+            if (v === 0) delete state.assignments[sid][did];
+            else state.assignments[sid][did] = v;
+            persist();
+        }
+
+        function exportAssignedData() {
+            if (state.students.length === 0) return alert("No students loaded.");
+
+            // 1. Prepare Target Columns (Sorted)
+            const genderPriority = { 'Boy': 1, 'Both': 2, 'Girl': 3 };
+            const sortedDresses = [...state.dresses].sort((a, b) => {
+                const priA = genderPriority[a.gender] || 99;
+                const priB = genderPriority[b.gender] || 99;
+                if (priA !== priB) return priA - priB;
+                return a.name.localeCompare(b.name);
+            });
+
+            // 2. Prepare Assignment Data for Sheet
+            const assignmentData = state.students.map(s => {
+                const row = {
+                    'Admission No': s.RegNo,
+                    'Roll No': s.Roll,
+                    'Student Name': s.Name,
+                    'Class': s.Class,
+                    'Division': s.Section,
+                    'Gender': s.Gender,
+                    'House': s.House
+                };
+
+                // Add Measurements (U1-L8)
+                ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'].forEach(m => {
+                    row[m] = s[m] || '';
+                });
+
+                sortedDresses.forEach(d => {
+                    const current = state.assignments[s.id] || {};
+                    const qty = current[d.id] || 0;
+                    row[`ASSIGN_${d.name}`] = qty > 0 ? 'YES' : 'NO';
+                    row[`QTY_${d.name}`] = qty;
+                });
+                return row;
+            });
+
+            // 3. Prepare Dress Config for sheet (to help Production Dashboard)
+            const dressConfigData = state.dresses.map(d => ({
+                'Name': d.name,
+                'Gender': d.gender,
+                'Columns': (d.cols || []).join(',')
+            }));
+
+            // 4. Prepare System State (for cross-system sync)
+            const systemState = [
+                { key: 'assignments', value: JSON.stringify(state.assignments) },
+                { key: 'dresses', value: JSON.stringify(state.dresses) },
+                { key: 'exportDate', value: new Date().toISOString() }
+            ];
+
+            // 5. Create Workbook
+            let wb;
+            if (state.sourceBinary) {
+                // Base off the original file to preserve all sheets and original measurements
+                wb = XLSX.read(state.sourceBinary, { type: 'array' });
+            } else {
+                wb = XLSX.utils.book_new();
+            }
+
+            // Remove existing Teacher tabs if they exist (for clean overwrites)
+            const sheetsToClear = ["Teacher Assignments", "Dress Config", "EXAL_SYSTEM_STATE"];
+            wb.SheetNames = wb.SheetNames.filter(n => !sheetsToClear.includes(n));
+
+            // Add new sheets
+            const wsAssign = XLSX.utils.json_to_sheet(assignmentData);
+            const wsConfig = XLSX.utils.json_to_sheet(dressConfigData);
+            const wsState = XLSX.utils.json_to_sheet(systemState);
+
+            XLSX.utils.book_append_sheet(wb, wsAssign, "Teacher Assignments");
+            XLSX.utils.book_append_sheet(wb, wsConfig, "Dress Config");
+            XLSX.utils.book_append_sheet(wb, wsState, "EXAL_SYSTEM_STATE");
+
+            // 6. Save
+            XLSX.writeFile(wb, `EXAL_Production_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
+            showToast("Exporting Master Workbook with Sync Data...");
+        }
+
+        function exportSummaryPDF() {
+            if (state.students.length === 0) return alert("No students loaded.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const timestamp = new Date().toLocaleString();
+
+            doc.setFontSize(20);
+            doc.setTextColor(44, 62, 80);
+            doc.text("STUDENT ASSIGNMENT SUMMARY", 14, 20);
+
+            doc.setFontSize(10);
+            doc.setTextColor(127, 140, 141);
+            doc.text(`Generated on: ${timestamp}`, 14, 28);
+
+            const tableData = state.students.filter(s => state.assignments[s.id] && Object.keys(state.assignments[s.id]).length > 0).map(s => {
+                const assigned = state.assignments[s.id];
+                const dressList = state.dresses
+                    .filter(d => assigned[d.id] > 0)
+                    .map(d => `${d.name} (x${assigned[d.id]})`)
+                    .join(", ");
+
+                return [
+                    s.RegNo,
+                    s.Roll,
+                    s.Name,
+                    `${s.Class} - ${s.Section}`,
+                    s.Gender,
+                    dressList
+                ];
+            });
+
+            if (tableData.length === 0) return alert("No assignments found to export.");
+
+            doc.autoTable({
+                startY: 35,
+                head: [['Adm No', 'Roll', 'Student Name', 'Class', 'Gender', 'Assigned Dresses']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [44, 62, 80], fontSize: 9 },
+                styles: { fontSize: 8 },
+                columnStyles: {
+                    5: { cellWidth: 100 }
+                }
+            });
+
+            doc.save(`Assignment_Summary_${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast("Summary PDF Downloaded!");
+        }
+    </script>
+</body>
+
+</html>
